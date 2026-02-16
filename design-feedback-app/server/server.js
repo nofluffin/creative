@@ -35,6 +35,14 @@ app.get('/api/review/:share_token', (req, res) => {
   res.json({ ...project, assets });
 });
 
+// In production, serve the built React frontend
+const clientDist = path.join(__dirname, '..', 'client', 'dist');
+app.use(express.static(clientDist));
+// All non-API routes fall through to the React app (client-side routing)
+app.get('*', (req, res) => {
+  res.sendFile(path.join(clientDist, 'index.html'));
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
