@@ -1,9 +1,22 @@
 const BASE = '/api';
 
+function getAuthToken() {
+  return localStorage.getItem('auth_token');
+}
+
 async function request(url, options = {}) {
+  const token = getAuthToken();
+  const headers = {
+    'Content-Type': 'application/json',
+    ...options.headers,
+  };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
   const res = await fetch(`${BASE}${url}`, {
-    headers: { 'Content-Type': 'application/json', ...options.headers },
     ...options,
+    headers,
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: res.statusText }));
@@ -11,6 +24,34 @@ async function request(url, options = {}) {
   }
   return res.json();
 }
+
+// Auth
+export const getAuthConfig = () =>
+  fetch(`${BASE}/auth/config`).then((r) => r.json());
+
+export const googleSignIn = (credential) =>
+  fetch(`${BASE}/auth/google`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ credential }),
+  }).then(async (res) => {
+    if (!res.ok) throw new Error('Sign in failed');
+    return res.json();
+  });
+
+export const getMe = (token) =>
+  fetch(`${BASE}/auth/me`, {
+    headers: { Authorization: `Bearer ${token}` },
+  }).then(async (res) => {
+    if (!res.ok) throw new Error('Not authenticated');
+    return res.json();
+  });
+
+export const logout = (token) =>
+  fetch(`${BASE}/auth/logout`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+  });
 
 // Projects
 export const createProject = (data) =>

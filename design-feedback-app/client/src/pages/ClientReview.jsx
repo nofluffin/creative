@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { getReview, getComments, createComment } from '../api/client';
 import ImageViewer from '../components/ImageViewer';
 import SidePanel from '../components/SidePanel';
+import UserMenu from '../components/UserMenu';
 
 export default function ClientReview() {
   const { share_token } = useParams();
@@ -77,10 +78,13 @@ export default function ClientReview() {
     <div className="min-h-screen bg-[#F8FAFC]">
       {/* Header */}
       <header className="bg-white border-b border-gray-200">
-        <div className="max-w-[1400px] mx-auto px-6 py-4">
-          <p className="text-xs text-gray-400 uppercase tracking-wide font-medium">Design Review</p>
-          <h1 className="text-lg font-bold text-navy">{project.name}</h1>
-          <p className="text-sm text-gray-500">by {project.client_name}</p>
+        <div className="max-w-[1400px] mx-auto px-6 py-4 flex items-center justify-between">
+          <div>
+            <p className="text-xs text-gray-400 uppercase tracking-wide font-medium">Design Review</p>
+            <h1 className="text-lg font-bold text-navy">{project.name}</h1>
+            <p className="text-sm text-gray-500">by {project.client_name}</p>
+          </div>
+          <UserMenu />
         </div>
       </header>
 
@@ -95,7 +99,7 @@ export default function ClientReview() {
         <div className="max-w-[1400px] mx-auto px-6 py-4">
           {comments.length === 0 && (
             <p className="text-xs text-gray-400 mb-3">
-              Click anywhere on the image to leave a comment.
+              Sign in and click anywhere on the image to leave a comment.
             </p>
           )}
 

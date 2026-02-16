@@ -10,6 +10,7 @@ import {
 import ImageViewer from '../components/ImageViewer';
 import SidePanel from '../components/SidePanel';
 import ShareLink from '../components/ShareLink';
+import UserMenu from '../components/UserMenu';
 
 export default function AdminProjectDetail() {
   const { id } = useParams();
@@ -114,6 +115,7 @@ export default function AdminProjectDetail() {
             </div>
           </div>
           <div className="flex items-center gap-3">
+            <UserMenu />
             <label className="bg-accent text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-accent-hover transition-colors cursor-pointer">
               {uploading ? 'Uploading...' : 'Upload Image'}
               <input

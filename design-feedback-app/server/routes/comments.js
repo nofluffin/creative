@@ -1,14 +1,15 @@
 const express = require('express');
 const { v4: uuidv4 } = require('uuid');
 const db = require('../db/setup');
+const { requireAuth } = require('../middleware/auth');
 
 const router = express.Router();
 
-// Create comment on asset
-router.post('/assets/:asset_id/comments', (req, res) => {
-  const { pin_x, pin_y, author_name, content } = req.body;
-  if (pin_x == null || pin_y == null || !author_name || !content) {
-    return res.status(400).json({ error: 'pin_x, pin_y, author_name, and content are required' });
+// Create comment on asset (requires auth)
+router.post('/assets/:asset_id/comments', requireAuth, (req, res) => {
+  const { pin_x, pin_y, content } = req.body;
+  if (pin_x == null || pin_y == null || !content) {
+    return res.status(400).json({ error: 'pin_x, pin_y, and content are required' });
   }
 
   const asset = db.prepare('SELECT * FROM assets WHERE id = ?').get(req.params.asset_id);
@@ -16,8 +17,8 @@ router.post('/assets/:asset_id/comments', (req, res) => {
 
   const id = uuidv4();
   db.prepare(
-    'INSERT INTO comments (id, asset_id, author_name, content, pin_x, pin_y) VALUES (?, ?, ?, ?, ?, ?)'
-  ).run(id, req.params.asset_id, author_name, content, pin_x, pin_y);
+    'INSERT INTO comments (id, asset_id, author_name, content, pin_x, pin_y, user_id, author_avatar) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+  ).run(id, req.params.asset_id, req.user.name, content, pin_x, pin_y, req.user.id, req.user.picture);
 
   const comment = db.prepare('SELECT * FROM comments WHERE id = ?').get(id);
   res.status(201).json(comment);
@@ -59,11 +60,11 @@ router.delete('/comments/:id', (req, res) => {
   res.json({ success: true });
 });
 
-// Create reply
-router.post('/comments/:comment_id/replies', (req, res) => {
-  const { author_name, content } = req.body;
-  if (!author_name || !content) {
-    return res.status(400).json({ error: 'author_name and content are required' });
+// Create reply (requires auth)
+router.post('/comments/:comment_id/replies', requireAuth, (req, res) => {
+  const { content } = req.body;
+  if (!content) {
+    return res.status(400).json({ error: 'content is required' });
   }
 
   const comment = db.prepare('SELECT * FROM comments WHERE id = ?').get(req.params.comment_id);
@@ -71,8 +72,8 @@ router.post('/comments/:comment_id/replies', (req, res) => {
 
   const id = uuidv4();
   db.prepare(
-    'INSERT INTO replies (id, comment_id, author_name, content) VALUES (?, ?, ?, ?)'
-  ).run(id, req.params.comment_id, author_name, content);
+    'INSERT INTO replies (id, comment_id, author_name, content, user_id, author_avatar) VALUES (?, ?, ?, ?, ?, ?)'
+  ).run(id, req.params.comment_id, req.user.name, content, req.user.id, req.user.picture);
 
   const reply = db.prepare('SELECT * FROM replies WHERE id = ?').get(id);
   res.status(201).json(reply);

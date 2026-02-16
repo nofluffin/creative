@@ -47,6 +47,34 @@ db.exec(`
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     FOREIGN KEY (comment_id) REFERENCES comments(id) ON DELETE CASCADE
   );
+
+  CREATE TABLE IF NOT EXISTS users (
+    id TEXT PRIMARY KEY,
+    google_id TEXT UNIQUE NOT NULL,
+    email TEXT NOT NULL,
+    name TEXT NOT NULL,
+    picture TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+
+  CREATE TABLE IF NOT EXISTS sessions (
+    token TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    expires_at TEXT NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  );
 `);
+
+// Add new columns to existing tables (safe to re-run)
+const alterStatements = [
+  'ALTER TABLE comments ADD COLUMN user_id TEXT',
+  'ALTER TABLE comments ADD COLUMN author_avatar TEXT',
+  'ALTER TABLE replies ADD COLUMN user_id TEXT',
+  'ALTER TABLE replies ADD COLUMN author_avatar TEXT',
+];
+for (const sql of alterStatements) {
+  try { db.exec(sql); } catch (e) { /* column already exists */ }
+}
 
 module.exports = db;

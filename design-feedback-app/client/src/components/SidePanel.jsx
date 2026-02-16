@@ -1,8 +1,10 @@
 import { useState } from 'react';
+import { GoogleLogin } from '@react-oauth/google';
 import { createReply, resolveComment } from '../api/client';
+import { useAuth } from '../context/AuthContext';
 
 export default function SidePanel({ comment, pinNumber, isAdmin, onClose, onUpdate }) {
-  const [replyAuthor, setReplyAuthor] = useState('');
+  const { user, signIn, clientId } = useAuth();
   const [replyContent, setReplyContent] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
@@ -10,11 +12,10 @@ export default function SidePanel({ comment, pinNumber, isAdmin, onClose, onUpda
 
   const handleReply = async (e) => {
     e.preventDefault();
-    if (!replyAuthor.trim() || !replyContent.trim()) return;
+    if (!user || !replyContent.trim()) return;
     setSubmitting(true);
     try {
       await createReply(comment.id, {
-        author_name: replyAuthor.trim(),
         content: replyContent.trim(),
       });
       setReplyContent('');
@@ -47,6 +48,14 @@ export default function SidePanel({ comment, pinNumber, isAdmin, onClose, onUpda
           <span className="w-7 h-7 rounded-full bg-accent text-white text-xs font-bold flex items-center justify-center">
             {pinNumber}
           </span>
+          {comment.author_avatar && (
+            <img
+              src={comment.author_avatar}
+              alt=""
+              className="w-6 h-6 rounded-full"
+              referrerPolicy="no-referrer"
+            />
+          )}
           <span className="font-semibold text-sm text-navy">{comment.author_name}</span>
         </div>
         <button
@@ -90,7 +99,17 @@ export default function SidePanel({ comment, pinNumber, isAdmin, onClose, onUpda
             </p>
             {comment.replies.map((reply) => (
               <div key={reply.id} className="bg-gray-50 rounded-lg p-3">
-                <p className="text-xs font-semibold text-navy">{reply.author_name}</p>
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  {reply.author_avatar && (
+                    <img
+                      src={reply.author_avatar}
+                      alt=""
+                      className="w-4 h-4 rounded-full"
+                      referrerPolicy="no-referrer"
+                    />
+                  )}
+                  <p className="text-xs font-semibold text-navy">{reply.author_name}</p>
+                </div>
                 <p className="text-sm text-gray-700 mt-0.5 leading-relaxed">{reply.content}</p>
                 <p className="text-xs text-gray-400 mt-1">{formatDate(reply.created_at)}</p>
               </div>
@@ -100,33 +119,48 @@ export default function SidePanel({ comment, pinNumber, isAdmin, onClose, onUpda
       </div>
 
       {/* Reply form */}
-      <form onSubmit={handleReply} className="p-4 border-t border-gray-100">
-        <input
-          type="text"
-          placeholder="Your name"
-          value={replyAuthor}
-          onChange={(e) => setReplyAuthor(e.target.value)}
-          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mb-2 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
-          required
-        />
-        <div className="flex gap-2">
-          <input
-            type="text"
-            placeholder="Write a reply..."
-            value={replyContent}
-            onChange={(e) => setReplyContent(e.target.value)}
-            className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
-            required
-          />
-          <button
-            type="submit"
-            disabled={submitting || !replyAuthor.trim() || !replyContent.trim()}
-            className="bg-accent text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-accent-hover disabled:opacity-50 transition-colors"
-          >
-            Reply
-          </button>
+      {user ? (
+        <form onSubmit={handleReply} className="p-4 border-t border-gray-100">
+          <div className="flex items-center gap-2 mb-2">
+            <img
+              src={user.picture}
+              alt=""
+              className="w-5 h-5 rounded-full"
+              referrerPolicy="no-referrer"
+            />
+            <span className="text-xs font-medium text-navy">{user.name}</span>
+          </div>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              placeholder="Write a reply..."
+              value={replyContent}
+              onChange={(e) => setReplyContent(e.target.value)}
+              className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
+              required
+            />
+            <button
+              type="submit"
+              disabled={submitting || !replyContent.trim()}
+              className="bg-accent text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-accent-hover disabled:opacity-50 transition-colors"
+            >
+              Reply
+            </button>
+          </div>
+        </form>
+      ) : (
+        <div className="p-4 border-t border-gray-100">
+          <p className="text-xs text-gray-500 mb-2">Sign in to reply</p>
+          {clientId && (
+            <GoogleLogin
+              onSuccess={(response) => signIn(response.credential)}
+              onError={() => {}}
+              size="small"
+              theme="outline"
+            />
+          )}
         </div>
-      </form>
+      )}
     </div>
   );
 }

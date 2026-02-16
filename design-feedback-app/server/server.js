@@ -5,6 +5,7 @@ const path = require('path');
 const projectsRouter = require('./routes/projects');
 const assetsRouter = require('./routes/assets');
 const commentsRouter = require('./routes/comments');
+const authRouter = require('./routes/auth');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -16,6 +17,7 @@ app.use(express.json());
 app.use('/api/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // API routes
+app.use('/api/auth', authRouter);
 app.use('/api/projects', projectsRouter);
 // Asset routes are mounted at /api so the full paths work:
 // POST /api/projects/:id/assets, GET /api/assets/:id, DELETE /api/assets/:id

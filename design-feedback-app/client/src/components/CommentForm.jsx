@@ -1,16 +1,18 @@
 import { useState } from 'react';
+import { GoogleLogin } from '@react-oauth/google';
+import { useAuth } from '../context/AuthContext';
 
 export default function CommentForm({ pinX, pinY, onSubmit, onCancel }) {
-  const [authorName, setAuthorName] = useState('');
+  const { user, signIn, clientId } = useAuth();
   const [content, setContent] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!authorName.trim() || !content.trim()) return;
+    if (!user || !content.trim()) return;
     setSubmitting(true);
     try {
-      await onSubmit({ author_name: authorName.trim(), content: content.trim(), pin_x: pinX, pin_y: pinY });
+      await onSubmit({ content: content.trim(), pin_x: pinX, pin_y: pinY });
     } finally {
       setSubmitting(false);
     }
@@ -25,33 +27,59 @@ export default function CommentForm({ pinX, pinY, onSubmit, onCancel }) {
     zIndex: 30,
   };
 
+  // Not signed in - show sign-in prompt
+  if (!user) {
+    return (
+      <div style={formStyle} onClick={(e) => e.stopPropagation()}>
+        <div className="bg-white rounded-xl shadow-xl border border-gray-200 p-4 w-72">
+          <p className="text-sm text-gray-600 mb-3">Sign in with Google to leave a comment</p>
+          {clientId && (
+            <GoogleLogin
+              onSuccess={(response) => signIn(response.credential)}
+              onError={() => {}}
+              size="medium"
+              theme="outline"
+            />
+          )}
+          <button
+            onClick={onCancel}
+            className="mt-3 text-xs text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={formStyle} onClick={(e) => e.stopPropagation()}>
       <form
         onSubmit={handleSubmit}
         className="bg-white rounded-xl shadow-xl border border-gray-200 p-4 w-72"
       >
-        <input
-          type="text"
-          placeholder="Your name"
-          value={authorName}
-          onChange={(e) => setAuthorName(e.target.value)}
-          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mb-2 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
-          autoFocus
-          required
-        />
+        <div className="flex items-center gap-2 mb-3">
+          <img
+            src={user.picture}
+            alt=""
+            className="w-6 h-6 rounded-full"
+            referrerPolicy="no-referrer"
+          />
+          <span className="text-sm font-medium text-navy">{user.name}</span>
+        </div>
         <textarea
           placeholder="Leave a comment..."
           value={content}
           onChange={(e) => setContent(e.target.value)}
           rows={3}
           className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mb-3 resize-none focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
+          autoFocus
           required
         />
         <div className="flex gap-2">
           <button
             type="submit"
-            disabled={submitting || !authorName.trim() || !content.trim()}
+            disabled={submitting || !content.trim()}
             className="flex-1 bg-accent text-white text-sm font-medium py-2 rounded-lg hover:bg-accent-hover disabled:opacity-50 transition-colors"
           >
             {submitting ? 'Posting...' : 'Submit'}
