@@ -1,0 +1,10 @@
+{
+  "name": "creative",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "postinstall": "cd design-feedback-app/server && npm install && cd ../client && npm install",
+    "build": "cd design-feedback-app/client && npm run build",
+    "start": "cd design-feedback-app/server && node server.js"
+  }
+}
